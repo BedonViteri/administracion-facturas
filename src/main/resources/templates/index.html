@@ -124,10 +124,10 @@
         </td>
         <td>
           <div style="display:flex;gap:0.5rem;">
-            <button class="btn btn-success" style="font-size:0.75rem;padding:0.4rem 0.7rem;"
-                    th:onclick="'abrirReenviar(' + f.id + ', \'' + (f.cliente != null ? f.cliente.correo : '') + '\')'">
-              📧 Email
-            </button>
+           <button class="btn btn-success" style="font-size:0.75rem;padding:0.4rem 0.7rem;"
+        th:attr="onclick='abrirReenviar(' + ${f.id} + ', &quot;' + ${f.cliente != null ? f.cliente.correo : ''} + '&quot;)'">
+  📧 Email
+</button>
           </div>
         </td>
       </tr>
