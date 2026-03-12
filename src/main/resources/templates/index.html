@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Administración de Facturas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0f; --card: #13131a; --border: #2a2a3a;
+      --accent: #00e5ff; --accent2: #7b2fff; --text: #e8e8f0;
+      --muted: #6b6b80; --success: #00e676; --error: #ff1744; --warning: #ffc400;
+    }
+    body { min-height:100vh; background:var(--bg); font-family:'Syne',sans-serif; color:var(--text); padding:2rem;
+      background-image: radial-gradient(ellipse 80% 50% at 20% 20%, rgba(123,47,255,0.15) 0%, transparent 60%),
+                        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0,229,255,0.1) 0%, transparent 60%); }
+    h1 { font-size:1.8rem; font-weight:800; margin-bottom:0.3rem; }
+    h1 span { color:var(--accent); }
+    .subtitle { color:var(--muted); font-family:'Space Mono',monospace; font-size:0.8rem; margin-bottom:2rem; }
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:2rem; max-width:900px; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.2rem; text-align:center; }
+    .stat-num { font-size:2rem; font-weight:800; color:var(--accent); font-family:'Space Mono',monospace; }
+    .stat-label { font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; }
+    .filtros { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.2rem; margin-bottom:2rem; max-width:900px; }
+    .filtros-title { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:1rem; }
+    .filtros-row { display:flex; gap:1rem; flex-wrap:wrap; }
+    input, select { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:0.7rem 1rem; font-family:'Space Mono',monospace; font-size:0.85rem; color:var(--text); outline:none; transition:border-color 0.2s; }
+    input:focus { border-color:var(--accent); }
+    .btn { padding:0.7rem 1.2rem; border:none; border-radius:10px; font-family:'Syne',sans-serif; font-size:0.85rem; font-weight:700; cursor:pointer; transition:opacity 0.2s; }
+    .btn:hover { opacity:0.85; }
+    .btn-primary { background:var(--accent2); color:#fff; }
+    .btn-success { background:var(--success); color:#000; }
+    .btn-warning { background:var(--warning); color:#000; }
+    .btn-reset { background:var(--border); color:var(--text); }
+    .tabla-container { max-width:1100px; overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; }
+    th { background:var(--card); border-bottom:2px solid var(--border); padding:0.8rem 1rem; text-align:left; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); }
+    td { padding:0.9rem 1rem; border-bottom:1px solid var(--border); font-size:0.85rem; vertical-align:middle; }
+    tr:hover td { background:rgba(255,255,255,0.02); }
+    .badge { display:inline-block; padding:0.25rem 0.7rem; border-radius:20px; font-size:0.7rem; font-weight:700; font-family:'Space Mono',monospace; }
+    .badge-activa { background:rgba(0,230,118,0.15); color:var(--success); border:1px solid rgba(0,230,118,0.3); }
+    .badge-anulada { background:rgba(255,23,68,0.15); color:var(--error); border:1px solid rgba(255,23,68,0.3); }
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; align-items:center; justify-content:center; }
+    .modal-overlay.active { display:flex; }
+    .modal { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:2rem; min-width:380px; }
+    .modal h3 { margin-bottom:1rem; font-size:1rem; }
+    .modal input { width:100%; margin-bottom:1rem; }
+    .modal-btns { display:flex; gap:0.75rem; }
+    .result-msg { margin-top:0.75rem; font-size:0.8rem; font-family:'Space Mono',monospace; padding:0.5rem; border-radius:8px; display:none; }
+    .result-msg.ok { background:rgba(0,230,118,0.1); color:var(--success); display:block; }
+    .result-msg.err { background:rgba(255,23,68,0.1); color:var(--error); display:block; }
+    .empty { text-align:center; padding:3rem; color:var(--muted); font-family:'Space Mono',monospace; }
+  </style>
+</head>
+<body>
+
+<h1>Administración de <span>Facturas</span></h1>
+<p class="subtitle">// Microservicio · Administración · Azure · 20.220.187.14</p>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-num" th:text="${total}">0</div>
+    <div class="stat-label">Facturas encontradas</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" th:text="${#lists.size(facturas) > 0 ? '$' + #aggregates.sum(facturas.![total]) : '$0'}">$0</div>
+    <div class="stat-label">Total recaudado</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num" th:text="${filtro}">Todas</div>
+    <div class="stat-label">Filtro activo</div>
+  </div>
+</div>
+
+<!-- FILTROS -->
+<div class="filtros">
+  <div class="filtros-title">Buscar facturas</div>
+  <div class="filtros-row">
+    <form method="get" action="/" style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+      <input type="date" name="fecha" placeholder="Buscar por fecha"
+             th:value="${param.fecha}"/>
+      <input type="text" name="cedula" placeholder="Buscar por cédula" maxlength="10"
+             th:value="${param.cedula}"/>
+      <button type="submit" class="btn btn-primary">🔍 Buscar</button>
+      <a href="/" class="btn btn-reset">✖ Limpiar</a>
+    </form>
+  </div>
+</div>
+
+<!-- TABLA -->
+<div class="tabla-container">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Cédula</th>
+        <th>Productos</th>
+        <th>Total</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:if="${#lists.isEmpty(facturas)}">
+        <td colspan="8" class="empty">No se encontraron facturas</td>
+      </tr>
+      <tr th:each="f : ${facturas}">
+        <td style="font-family:'Space Mono',monospace;color:var(--accent);">#<span th:text="${f.id}"></span></td>
+        <td style="font-family:'Space Mono',monospace;font-size:0.75rem;" th:text="${f.fecha != null ? f.fecha.substring(0,10) : '-'}"></td>
+        <td>
+          <div style="font-weight:700;" th:text="${f.cliente != null ? f.cliente.nombre + ' ' + (f.cliente.apellido ?: '') : 'Sin cliente'}"></div>
+          <div style="font-size:0.75rem;color:var(--muted);" th:text="${f.cliente != null ? f.cliente.correo : ''}"></div>
+        </td>
+        <td style="font-family:'Space Mono',monospace;font-size:0.8rem;" th:text="${f.cliente != null ? f.cliente.cedula : '-'}"></td>
+        <td style="font-size:0.8rem;color:var(--muted);" th:text="${f.detalles != null ? #lists.size(f.detalles) + ' producto(s)' : '0'}"></td>
+        <td style="font-weight:700;color:var(--success);font-family:'Space Mono',monospace;" th:text="${'$' + f.total}"></td>
+        <td>
+          <span class="badge badge-activa" th:if="${f.estado == null or f.estado != 'ANULADA'}">ACTIVA</span>
+          <span class="badge badge-anulada" th:if="${f.estado == 'ANULADA'}">ANULADA</span>
+        </td>
+        <td>
+          <div style="display:flex;gap:0.5rem;">
+            <button class="btn btn-success" style="font-size:0.75rem;padding:0.4rem 0.7rem;"
+                    th:onclick="'abrirReenviar(' + f.id + ', \'' + (f.cliente != null ? f.cliente.correo : '') + '\')'">
+              📧 Email
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- MODAL REENVIAR EMAIL -->
+<div class="modal-overlay" id="modalEmail">
+  <div class="modal">
+    <h3>📧 Reenviar Factura <span id="modalFacturaId"></span></h3>
+    <label style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:0.4rem;">
+      Correo destino
+    </label>
+    <input type="email" id="emailDestino" placeholder="correo@gmail.com"/>
+    <div class="modal-btns">
+      <button class="btn btn-success" onclick="reenviarEmail()">✅ Enviar</button>
+      <button class="btn btn-reset" onclick="cerrarModal()">Cancelar</button>
+    </div>
+    <div class="result-msg" id="resultMsg"></div>
+  </div>
+</div>
+
+<script>
+  let facturaIdActual = null;
+
+  function abrirReenviar(id, correo) {
+    facturaIdActual = id;
+    document.getElementById('modalFacturaId').textContent = '#' + id;
+    document.getElementById('emailDestino').value = correo || '';
+    document.getElementById('resultMsg').className = 'result-msg';
+    document.getElementById('modalEmail').classList.add('active');
+  }
+
+  function cerrarModal() {
+    document.getElementById('modalEmail').classList.remove('active');
+    facturaIdActual = null;
+  }
+
+  async function reenviarEmail() {
+    const email = document.getElementById('emailDestino').value.trim();
+    if (!email) { alert('Ingresa un correo'); return; }
+
+    const msg = document.getElementById('resultMsg');
+    msg.className = 'result-msg';
+    msg.textContent = 'Enviando...';
+    msg.style.display = 'block';
+
+    try {
+      const res = await fetch('/reenviar/' + facturaIdActual + '?email=' + encodeURIComponent(email), {
+        method: 'POST'
+      });
+      const text = await res.text();
+      if (text === 'OK') {
+        msg.className = 'result-msg ok';
+        msg.textContent = '✅ Factura enviada exitosamente';
+        setTimeout(() => cerrarModal(), 2000);
+      } else {
+        msg.className = 'result-msg err';
+        msg.textContent = '❌ ' + text;
+      }
+    } catch(e) {
+      msg.className = 'result-msg err';
+      msg.textContent = '❌ Error de conexión';
+    }
+  }
+
+  document.getElementById('modalEmail').addEventListener('click', function(e) {
+    if (e.target === this) cerrarModal();
+  });
+</script>
+</body>
+</html>
