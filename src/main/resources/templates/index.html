@@ -65,7 +65,7 @@
     <div class="stat-label">Facturas encontradas</div>
   </div>
   <div class="stat-card">
-    <div class="stat-num" th:text="${#lists.size(facturas) > 0 ? '$' + #aggregates.sum(facturas.![total]) : '$0'}">$0</div>
+    <div class="stat-num" th:text="${#lists.size(facturas) > 0 ? '$' + #numbers.formatDecimal(#aggregates.sum(facturas.![total]), 1, 2, 2) : '$0.00'}">$0.00</div>
     <div class="stat-label">Total recaudado</div>
   </div>
   <div class="stat-card">
@@ -117,7 +117,7 @@
         </td>
         <td style="font-family:'Space Mono',monospace;font-size:0.8rem;" th:text="${f.cliente != null ? f.cliente.cedula : '-'}"></td>
         <td style="font-size:0.8rem;color:var(--muted);" th:text="${f.detalles != null ? #lists.size(f.detalles) + ' producto(s)' : '0'}"></td>
-        <td style="font-weight:700;color:var(--success);font-family:'Space Mono',monospace;" th:text="${'$' + f.total}"></td>
+        <td style="font-weight:700;color:var(--success);font-family:'Space Mono',monospace;" th:text="${'$' + #numbers.formatDecimal(f.total, 1, 2, 2)}"></td>
         <td>
           <span class="badge badge-activa" th:if="${f.estado == null or f.estado != 'ANULADA'}">ACTIVA</span>
           <span class="badge badge-anulada" th:if="${f.estado == 'ANULADA'}">ANULADA</span>
