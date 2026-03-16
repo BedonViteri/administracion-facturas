@@ -58,14 +58,13 @@
 <h1>Administración de <span>Facturas</span></h1>
 <p class="subtitle">// Microservicio · Administración · Azure · 20.220.187.14</p>
 
-<!-- STATS -->
 <div class="stats">
   <div class="stat-card">
     <div class="stat-num" th:text="${total}">0</div>
     <div class="stat-label">Facturas encontradas</div>
   </div>
   <div class="stat-card">
-    <div class="stat-num" th:text="${#lists.size(facturas) > 0 ? '$' + #numbers.formatDecimal(#aggregates.sum(facturas.![total]), 1, 2, 2) : '$0.00'}">$0.00</div>
+    <div class="stat-num" th:text="${#lists.size(facturas) > 0 ? '$' + #numbers.formatDecimal(#aggregates.sum(facturas.![total]), 1, 'POINT', 2, 'COMMA') : '$0.00'}">$0.00</div>
     <div class="stat-label">Total recaudado</div>
   </div>
   <div class="stat-card">
@@ -74,22 +73,18 @@
   </div>
 </div>
 
-<!-- FILTROS -->
 <div class="filtros">
   <div class="filtros-title">Buscar facturas</div>
   <div class="filtros-row">
     <form method="get" action="/" style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-      <input type="date" name="fecha" placeholder="Buscar por fecha"
-             th:value="${param.fecha}"/>
-      <input type="text" name="cedula" placeholder="Buscar por cédula" maxlength="10"
-             th:value="${param.cedula}"/>
-      <button type="submit" class="btn btn-primary">🔍 Buscar</button>
-      <a href="/" class="btn btn-reset">✖ Limpiar</a>
+      <input type="date" name="fecha" placeholder="Buscar por fecha" th:value="${param.fecha}"/>
+      <input type="text" name="cedula" placeholder="Buscar por cédula" maxlength="10" th:value="${param.cedula}"/>
+      <button type="submit" class="btn btn-primary">Buscar</button>
+      <a href="/" class="btn btn-reset">Limpiar</a>
     </form>
   </div>
 </div>
 
-<!-- TABLA -->
 <div class="tabla-container">
   <table>
     <thead>
@@ -112,23 +107,21 @@
         <td style="font-family:'Space Mono',monospace;color:var(--accent);">#<span th:text="${f.id}"></span></td>
         <td style="font-family:'Space Mono',monospace;font-size:0.75rem;" th:text="${f.fecha != null ? f.fecha.substring(0,10) : '-'}"></td>
         <td>
-         <div style="font-weight:700;"
-     th:text="${f.cliente != null ? f.cliente.nombre + ' ' + (f.cliente.apellido != null ? f.cliente.apellido : '') : 'Sin cliente'}">
-</div>
+          <div style="font-weight:700;" th:text="${f.cliente != null ? f.cliente.nombre + ' ' + (f.cliente.apellido != null ? f.cliente.apellido : '') : 'Sin cliente'}"></div>
         </td>
         <td style="font-family:'Space Mono',monospace;font-size:0.8rem;" th:text="${f.cliente != null ? f.cliente.cedula : '-'}"></td>
         <td style="font-size:0.8rem;color:var(--muted);" th:text="${f.detalles != null ? #lists.size(f.detalles) + ' producto(s)' : '0'}"></td>
-        <td style="font-weight:700;color:var(--success);font-family:'Space Mono',monospace;" th:text="${'$' + #numbers.formatDecimal(f.total, 1, 2, 2)}"></td>
+        <td style="font-weight:700;color:var(--success);font-family:'Space Mono',monospace;" th:text="${'$' + #numbers.formatDecimal(f.total, 1, 'POINT', 2, 'COMMA')}"></td>
         <td>
           <span class="badge badge-activa" th:if="${f.estado == null or f.estado != 'ANULADA'}">ACTIVA</span>
           <span class="badge badge-anulada" th:if="${f.estado == 'ANULADA'}">ANULADA</span>
         </td>
         <td>
           <div style="display:flex;gap:0.5rem;">
-           <button class="btn btn-success" style="font-size:0.75rem;padding:0.4rem 0.7rem;"
-        th:attr="onclick='abrirReenviar(' + ${f.id} + ', &quot;' + ${f.cliente != null ? f.cliente.correo : ''} + '&quot;)'">
-  📧 Email
-</button>
+            <button class="btn btn-success" style="font-size:0.75rem;padding:0.4rem 0.7rem;"
+              th:attr="onclick='abrirReenviar(' + ${f.id} + ', &quot;' + ${f.cliente != null ? f.cliente.correo : ''} + '&quot;)'">
+              Email
+            </button>
           </div>
         </td>
       </tr>
@@ -136,16 +129,13 @@
   </table>
 </div>
 
-<!-- MODAL REENVIAR EMAIL -->
 <div class="modal-overlay" id="modalEmail">
   <div class="modal">
-    <h3>📧 Reenviar Factura <span id="modalFacturaId"></span></h3>
-    <label style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:0.4rem;">
-      Correo destino
-    </label>
+    <h3>Reenviar Factura <span id="modalFacturaId"></span></h3>
+    <label style="font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:0.4rem;">Correo destino</label>
     <input type="email" id="emailDestino" placeholder="correo@gmail.com"/>
     <div class="modal-btns">
-      <button class="btn btn-success" onclick="reenviarEmail()">✅ Enviar</button>
+      <button class="btn btn-success" onclick="reenviarEmail()">Enviar</button>
       <button class="btn btn-reset" onclick="cerrarModal()">Cancelar</button>
     </div>
     <div class="result-msg" id="resultMsg"></div>
@@ -154,7 +144,6 @@
 
 <script>
   let facturaIdActual = null;
-
   function abrirReenviar(id, correo) {
     facturaIdActual = id;
     document.getElementById('modalFacturaId').textContent = '#' + id;
@@ -162,40 +151,33 @@
     document.getElementById('resultMsg').className = 'result-msg';
     document.getElementById('modalEmail').classList.add('active');
   }
-
   function cerrarModal() {
     document.getElementById('modalEmail').classList.remove('active');
     facturaIdActual = null;
   }
-
   async function reenviarEmail() {
     const email = document.getElementById('emailDestino').value.trim();
     if (!email) { alert('Ingresa un correo'); return; }
-
     const msg = document.getElementById('resultMsg');
     msg.className = 'result-msg';
     msg.textContent = 'Enviando...';
     msg.style.display = 'block';
-
     try {
-      const res = await fetch('/reenviar/' + facturaIdActual + '?email=' + encodeURIComponent(email), {
-        method: 'POST'
-      });
+      const res = await fetch('/reenviar/' + facturaIdActual + '?email=' + encodeURIComponent(email), { method: 'POST' });
       const text = await res.text();
       if (text === 'OK') {
         msg.className = 'result-msg ok';
-        msg.textContent = '✅ Factura enviada exitosamente';
+        msg.textContent = 'Factura enviada exitosamente';
         setTimeout(() => cerrarModal(), 2000);
       } else {
         msg.className = 'result-msg err';
-        msg.textContent = '❌ ' + text;
+        msg.textContent = 'Error: ' + text;
       }
     } catch(e) {
       msg.className = 'result-msg err';
-      msg.textContent = '❌ Error de conexión';
+      msg.textContent = 'Error de conexión';
     }
   }
-
   document.getElementById('modalEmail').addEventListener('click', function(e) {
     if (e.target === this) cerrarModal();
   });
